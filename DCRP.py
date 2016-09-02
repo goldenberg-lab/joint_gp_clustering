@@ -22,8 +22,7 @@ class DCRP(object):
         """
         Initial cluster assignment before Gibbs sampling Process
 
-        d[0,0] = X: N x t1 array
-        d[0,1] = T1: t1 x N array
+        d[0,0] = X: N x k array
         d[1,0] = Y: N x t2 array
         d[1,1] = T2: t2 x N array
         """
@@ -73,12 +72,12 @@ class DCRP(object):
         print "\tInitialized clusters for Y"
         print "Done Initialization"
         self.c1, self.ca1,self.c2,self.ca2 = (c1, ca1, c2, ca2)
-        return 
+        return
 
     def _gibbs_sampling_crp(self, data):
         """
         Run Gibbs sampling to get the cluster assignment
-        
+
         data[0,0] = X: N x t1 array
         data[0,1] = T1: t1 x N array
         data[1,0] = Y: N x t2 array

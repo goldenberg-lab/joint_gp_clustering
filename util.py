@@ -55,7 +55,7 @@ def load_simulation_data():
             k = k+1
 
     l2 = np.array([len(true_Y_clustering[i]) for i in range(num_Y_clusters)])
-    
+
     Nt2 = 6
     #a random number of realisations in each cluster
     T2 = np.random.rand(Nt2,np.sum(Nobs))
@@ -102,23 +102,3 @@ def rbf_kern(t1,t2, l,v):
 #   1:v1 = 1, l = 0.05, v2 = 1
 #   1:same
 #   2: 0.5,0.05,0.5
-def Px_z1(data, i, clustering, cluster_assn):
-    X = data[0,0]
-    T = data[0,1]
-    GPs = [GPCluster(rbf_kern,Y=X[list(cluster)],T=T[:,list(cluster)],var1=0.1, l=.05,var2=0.2) for cluster in clustering]
-    likelihoods = [GPs[j].likelihood(X[i], T[:,i]) for j in range(len(GPs))]
-    empty_gp = GPCluster(rbf_kern,Y=np.array([0]),T=np.array([0]),var1=.1, l=.01,var2=.1)
-    likelihoods.append(empty_gp.likelihood_empty(X[i], T[:,i]))
-    likelihoods = np.array(likelihoods)
-    return likelihoods
-# Settings tried:
-#   1:same
-#   1:same
-def Py_z2(data, i, clustering, cluster_assn):
-    Y = data[1,0]
-    T = data[1,1]
-    GPs = [GPCluster(rbf_kern,Y=Y[list(cluster)],T=T[:,list(cluster)],var1=.1, l=.05,var2=.2) for cluster in clustering]
-    likelihoods = [GPs[j].likelihood(Y[i], T[:,i]) for j in range(len(GPs))]
-    empty_gp = GPCluster(rbf_kern,Y=np.array([0]),T=np.array([0]),var1=.1, l=.05,var2=.1)
-    likelihoods.append(empty_gp.likelihood_empty(Y[i], T[:,i]))
-    return np.array(likelihoods)
