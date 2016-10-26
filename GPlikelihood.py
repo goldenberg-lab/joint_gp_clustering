@@ -39,8 +39,9 @@ class GPCluster(object):
 
     def K_star(self,x,x_):
         """
-        x: t x N
-        x_: t x 1
+        K_new = [[K , K*  ]
+                [ K*, K**]]
+        This function returns K*
         """
         t_ = x_.shape[0]
         t = x.shape[0]
@@ -53,6 +54,10 @@ class GPCluster(object):
         return K_star
 
     def likelihood(self,y,t):
+        """
+        return the likelihood of a trajectory with data:
+        y,t
+        """
         y = y.reshape(-1,1)
         t = t.reshape(-1,1)
         K_star = self.K_star(self.T, t)
@@ -66,7 +71,9 @@ class GPCluster(object):
         return l[0,0]
 
     def predict(self, t):
-        # return the mean and variance at a given t
+        """
+        returns the mean and variance of the gp at time t
+        """
         K_star = self.K_star(self.T, t)
         K_star_star = self.K(t)
         temp = np.dot(K_star,self.inv_cov)
@@ -74,12 +81,14 @@ class GPCluster(object):
         var = K_star_star - np.dot(temp, K_star.T)
         return mean, var
 
-    # TODO: experiment with predict_y
     def predict_y(self,y, t):
+        """
+        returns mean and variance
+        """
         new_t = np.concatenate((self.T,t.reshape(-1,1)),axis=1)
-        print new_t.shape # TODO: check this
+        # print new_t.shape # TODO: check this
         new_y = np.concatenate((self.Y,y.reshape(-1,1)),axis=0) # TODO: check this
-        print new_y.shape
+        # print new_y.shape
         K_ = self.K(new_t)
         K_star_star = K_[-1,-1]
         K_star = K_[-1,:-1] # TODO: check this
@@ -92,6 +101,9 @@ class GPCluster(object):
         return mean, var
 
     def likelihood_empty(self, y, t):
+        """
+        returns the likelihood of Y from the prior GP
+        """
         K_star_star = self.K(t)
         inv_cov = inv(K_star_star)
         res_sqrt_abs_det_inv_cov = 1./np.sqrt(abs(det(inv_cov)))

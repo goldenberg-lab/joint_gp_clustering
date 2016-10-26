@@ -4,16 +4,6 @@ from tqdm import tqdm
 from util import sample_multinomial
 import time
 
-def insert_into_data(x,y,t,data):
-    data_ = np.copy(data)
-    data_[0,0] = np.copy(data_[0,0])
-    data_[1,0] = np.copy(data_[1,0])
-    N,_ = data_[1,0].shape
-    data_[1,1] = np.copy(data_[1,1])
-    data_[0,0] = np.concatenate((data_[0,0],x.reshape(1,-1)),axis=0)
-    data_[1,0] = np.concatenate((data_[1,0],y.reshape(1,-1)),axis=0)
-    data_[1,1] = np.concatenate((data_[1,1],t.reshape(-1,1)),axis=1)
-    return data_
 
 
 class DCRP(object):
@@ -78,6 +68,9 @@ class DCRP(object):
                 crp_prior2.append(len(x) + k_)
             crp_prior2.append(self.alpha2)
             crp_prior2 = np.array(crp_prior2)/ (k+self.alpha2)
+            # crp_prior2 = [(len(x) + 0.0) / (i + self.alpha2) for j, x in enumerate(c2)]
+            # crp_prior2.append(self.alpha2 / (i + self.alpha2))
+            # crp_prior2 = np.array(crp_prior2)
             l2 = self.Py_z2(d, i, c2, ca2, self.prior2)
             probs = crp_prior2 * l2
             if probs[-1] != 0:
@@ -120,6 +113,7 @@ class DCRP(object):
                 ca1[i].remove(i)
                 if len(ca1[i]) == 0:
                     c1.remove(ca1[i])
+
                 cp1 = [(len(x) + 0.0) / (num_data - 1 + self.alpha1) for j, x in enumerate(c1)]
                 cp1.append(self.alpha1 / (num_data - 1 + self.alpha1))
                 cp1 = np.array(cp1)
@@ -147,6 +141,10 @@ class DCRP(object):
                 cp2.append(self.alpha2)
                 cp2 = np.array(cp2)
                 cp2 = cp2 / np.sum(cp2)
+                # cp2 = [(len(x) + 0.0) / (num_data - 1 + self.alpha2) for j, x in enumerate(c2)]
+                # cp2.append(self.alpha2 / (num_data - 1 + self.alpha2))
+                # cp2 = np.array(cp2)
+
                 l2 = self.Py_z2(data, i, c2, ca2, self.prior2)
                 p2 = cp2 * l2
                 if p1[-1] != 0:

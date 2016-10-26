@@ -156,6 +156,52 @@ def load_int_probe_data():
     T[:,3] = 3
     return np.array([[probes,[0]],[internalizing_z,T.T]])
 
+def load_ext_probe_data():
+    methyl = []
+    with open('./data/gene-level-methyl-95inds-mean-MAVANcandidates.txt') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        for row in spamreader:
+            methyl.append(np.array(row))
+    methyl = np.array(methyl)
+    non_missingid = methyl[0,1:]
+
+    methyl_wm = []
+    with open('./data/gene-level-methyl-153inds-mean-MAVANcandidates.txt') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        for row in spamreader:
+            methyl_wm.append(np.array(row))
+    methyl_wm = np.array(methyl_wm)
+    missingid = methyl_wm[0,1:]
+    i = 0
+    no_missing_indx = []
+    for j in range(missingid.shape[0]): # TODO: remove constant
+        if missingid[j] == non_missingid[i]:
+            no_missing_indx.append(j)
+            if i < 94 : #TODO: remove constant
+                i = i+1
+    probes = []
+    with open('./data/body-probes-153inds-MAVAN.txt') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        for row in spamreader:
+            probes.append(np.array(row))
+    probes = np.array(probes)
+    probes = probes[no_missing_indx,:].astype("double")
+    internalizing = []
+    with open('./data/externalizing-nomissing-zvals-ts.txt') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        for row in spamreader:
+            internalizing.append(np.array(row))
+    internalizing = np.array(internalizing)
+    internalizing_id = internalizing[1:,0]
+    internalizing_z = internalizing[1:,5:].astype("double")
+    internalizing_raw = internalizing[1:,1:5].astype("double")
+    T = np.zeros(internalizing_z.shape)
+    T[:,0] = 0
+    T[:,1] = 1
+    T[:,2] = 2
+    T[:,3] = 3
+    return np.array([[probes,[0]],[internalizing_z,T.T]])
+
 def load_ext_data():
     """
     load externalizing behaviours and methylation data w/ no missing values
