@@ -86,8 +86,6 @@ class DCRP(object):
             ca2.append(c2[cluster])
         print "\tInitialized clusters for Y"
         print "Done Initialization"
-        print "count1 = ", count1
-        print "count2 = ", count2
         self.c1, self.ca1,self.c2,self.ca2 = (c1, ca1, c2, ca2)
         return
 
@@ -162,8 +160,6 @@ class DCRP(object):
             if t % self.eb_interval == 0 and t > self.eb_start:
                 self.alpha1 = num_new_clusters1
                 self.alpha2 = num_new_clusters2
-        print "count1 = ", count1
-        print "count2 = ", count2
 
         self.c1, self.ca1,self.c2,self.ca2 = (c1, ca1,c2,ca2)
         return

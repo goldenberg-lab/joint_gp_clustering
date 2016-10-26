@@ -9,6 +9,12 @@ from DCRP import DCRP
 import cPickle
 import bokeh.plotting as bp
 bp.output_notebook()
+def compute_S(data):
+    N,D = data.shape
+    S = np.zeros((D,D))
+    for n in range(N):
+            S = S + np.dot(data[n].reshape(D,1), data[n].reshape(1,D))
+    return S
 
 # Load Data:
 # Expected Data format:
@@ -23,16 +29,29 @@ N,_ = data_ext[0,0].shape
 data_int = load_int_probe_data()
 N,_ = data_int[0,0].shape
 
+size_train = int(0.75 * N)
+size_test = N - size_train
 
-# Split Data into train and test set
+# Following is to avoid shallow copy of data:
+# TODO: create a function to do this in utils
 train_data_int = np.empty_like (data_int)
-train_data_int[0,0] = np.empty_like (data_int[0,0][:67,:])
-train_data_int[1,0] = np.empty_like (data_int[1,0][:67,:])
-train_data_int[1,1] = np.empty_like (data_int[1,1][:,:67])
+train_data_int[0,0] = np.empty_like (data_int[0,0][:size_train,:])
+train_data_int[1,0] = np.empty_like (data_int[1,0][:size_train,:])
+train_data_int[1,1] = np.empty_like (data_int[1,1][:,:size_train])
 train_data_ext = np.empty_like (data_ext)
-train_data_ext[0,0] = np.empty_like (data_ext[0,0][:67,:])
-train_data_ext[1,0] = np.empty_like (data_ext[1,0][:67,:])
-train_data_ext[1,1] = np.empty_like (data_ext[1,1][:,:67])
+train_data_ext[0,0] = np.empty_like (data_ext[0,0][:size_train,:])
+train_data_ext[1,0] = np.empty_like (data_ext[1,0][:size_train,:])
+train_data_ext[1,1] = np.empty_like (data_ext[1,1][:,:size_train])
+
+test_data_int = np.empty_like (data_int)
+test_data_int[0,0] = np.empty_like (data_int[0,0][size_train:,:])
+test_data_int[1,0] = np.empty_like (data_int[1,0][size_train:,:])
+test_data_int[1,1] = np.empty_like (data_int[1,1][:,size_train:])
+test_data_ext = np.empty_like (data_ext)
+test_data_ext[0,0] = np.empty_like (data_ext[0,0][size_train:,:])
+test_data_ext[1,0] = np.empty_like (data_ext[1,0][size_train:,:])
+test_data_ext[1,1] = np.empty_like (data_ext[1,1][:,size_train:])
+
 
 
 # Gaussian Likelihood:
@@ -93,25 +112,25 @@ def Py_z2(data, i, clustering, cluster_assn, prior, ti=0):
 # TODO: Need to try different hyperparameters
 alpha1 = 1.
 alpha2 = 1.
-N,D = train_data[0,0].shape
+N,D = train_data_int[0,0].shape
 prior1 = {
-"m0" : np.mean(train_data[0,0], axis = 0).reshape(-1,1),
+"m0" : np.mean(data_int[0,0], axis = 0).reshape(-1,1),
 "k0": 10.,
 "v0": 280.,
 "s0": np.eye(D)
 }
 prior2 = {
-"var1" : 0.05,
+"var1" : 0.01,
 "var2": 0.05,
 "length_scale": 0.5
 }
 
 rms_int = []
 rms_ext = []
-size_train = int(0.75 * N)
+size_train = int(0.80 * N)
 size_test = N - size_train
 #TODO: start with a small number of experiments
-num_experiments = 10
+num_experiments = 5
 for iter in range(num_experiments):
     # idx is used to select random indices
     idx = np.random.choice(range(N),size=N,replace=False)
@@ -119,57 +138,60 @@ for iter in range(num_experiments):
     train_data_int[0,0] = data_int[0,0][idx[:size_train],:]
     train_data_int[1,0] = data_int[1,0][idx[:size_train],:]
     train_data_int[1,1] = data_int[1,1][:,idx[:size_train]]
-    train_data_ext[0,0] = data_ext[0,0][idx[:size_train],:]
-    train_data_ext[1,0] = data_ext[1,0][idx[:size_train],:]
-    train_data_ext[1,1] = data_ext[1,1][:,idx[:size_train]]
+    # train_data_ext[0,0] = data_ext[0,0][idx[:size_train],:]
+    # train_data_ext[1,0] = data_ext[1,0][idx[:size_train],:]
+    # train_data_ext[1,1] = data_ext[1,1][:,idx[:size_train]]
 
     test_data_int[0,0] = data_int[0,0][idx[size_train:],:]
     test_data_int[1,0] = data_int[1,0][idx[size_train:],:]
     test_data_int[1,1] = data_int[1,1][:,idx[size_train:]]
-    test_data_ext[0,0] = data_ext[0,0][idx[size_train:],:]
-    test_data_ext[1,0] = data_ext[1,0][idx[size_train:],:]
-    test_data_ext[1,1] = data_ext[1,1][:,idx[size_train:]]
+    # test_data_ext[0,0] = data_ext[0,0][idx[size_train:],:]
+    # test_data_ext[1,0] = data_ext[1,0][idx[size_train:],:]
+    # test_data_ext[1,1] = data_ext[1,1][:,idx[size_train:]]
     dp1 = DCRP(alpha1,alpha2,Px_z1,Py_z2, prior1, prior2)
-    dp2 = DCRP(alpha1,alpha2,Px_z1,Py_z2, prior1, prior2)
+    # dp2 = DCRP(alpha1,alpha2,Px_z1,Py_z2, prior1, prior2)
 
     dp1._initialize_assn(train_data_int)
-    dp2._initialize_assn(train_data_ext)
+    # dp2._initialize_assn(train_data_ext)
     # Run gibbs sampling
     dp1._gibbs_sampling_crp(train_data_int)
-    dp2._gibbs_sampling_crp(train_data_ext)
+    # dp2._gibbs_sampling_crp(train_data_ext)
     # Final clustering
     dp1_c2 = len(dp1.c2)
-    dp2_c2 = len(dp2.c2)
+    # dp2_c2 = len(dp2.c2)
     dp1_gp = []
     dp2_gp = []
 
     for k in range (dp1_c2):
-        dp1_gp.append(GPCluster(rbf_kern,Y=train_data_int[1,0][list(dp.c2[k]),:],\
-                    T=train_data_int[1,1][:,list(dp.c2[k])],var1=prior2["var1"], \
+        dp1_gp.append(GPCluster(rbf_kern,Y=train_data_int[1,0][list(dp1.c2[k]),:],\
+                    T=train_data_int[1,1][:,list(dp1.c2[k])],var1=prior2["var1"], \
                     l=prior2["length_scale"],var2=prior2["var2"]))
     dp1_gp.append(GPCluster(rbf_kern,Y=np.array([[0,0,0,0]]),\
                     T=np.array([[0,1,2,3]]).T,var1=prior2["var1"],\
                     l=prior2["length_scale"],var2=prior2["var2"]))
-
-    for k in range (dp2_c2):
-        dp2_gp.append(GPCluster(rbf_kern,Y=train_data_ext[1,0][list(dp.c2[k]),:],\
-                    T=train_data_ext[1,1][:,list(dp.c2[k])],var1=prior2["var1"], \
-                    l=prior2["length_scale"],var2=prior2["var2"]))
-    dp2_gp.append(GPCluster(rbf_kern,Y=np.array([[0,0,0,0]]),\
-                    T=np.array([[0,1,2,3]]).T,var1=prior2["var1"], \
-                    l=prior2["length_scale"],var2=prior2["var2"]))
+    #
+    # for k in range (dp2_c2):
+    #     dp2_gp.append(GPCluster(rbf_kern,Y=train_data_ext[1,0][list(dp2.c2[k]),:],\
+    #                 T=train_data_ext[1,1][:,list(dp2.c2[k])],var1=prior2["var1"], \
+    #                 l=prior2["length_scale"],var2=prior2["var2"]))
+    # dp2_gp.append(GPCluster(rbf_kern,Y=np.array([[0,0,0,0]]),\
+    #                 T=np.array([[0,1,2,3]]).T,var1=prior2["var1"], \
+    #                 l=prior2["length_scale"],var2=prior2["var2"]))
 
     ms = 0
-    for m in range(test_data_size):
+    for m in range(size_test):
         y = test_data_int[1,0][m].reshape((-1,1))
-        y = test_data_ext[1,0][m].reshape((-1,1))
+        # y = test_data_ext[1,0][m].reshape((-1,1))
         y = y[:3]
         t = np.array([[0,1,2]])
         x = test_data_int[0,0][m]
-        prob = dp.predict(x,y,t[0:2],train_data_int)
+        prob = dp1.predict(x,y,t[0:2],train_data_int)
         t = np.array([[0,1,2,3]])
         sum = 0
         for i in range(prob.shape[0]):
             sum = sum + prob[i]*dp1_gp[i].predict_y(y,t)[0]
         ms = ms + pow(sum - test_data_int[1,0][m,3],2)
-    rms_int.append(np.sqrt(ms/test_data_size))
+    print "rms: ", np.sqrt(ms/size_test)
+    rms_int.append(np.sqrt(ms/size_test))
+
+print "rms: ", rms_int
