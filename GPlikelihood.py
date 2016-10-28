@@ -83,6 +83,9 @@ class GPCluster(object):
 
     def predict_y(self,y, t):
         """
+
+        y= (t-1)x1 #TODO:
+        t =(t)x1
         returns mean and variance
         """
         new_t = np.concatenate((self.T,t.reshape(-1,1)),axis=1)

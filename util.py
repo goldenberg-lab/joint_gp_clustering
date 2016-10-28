@@ -105,9 +105,9 @@ def load_int_data():
     internalizing_raw = internalizing[1:,1:5].astype("double")
     T = np.zeros(internalizing_z.shape)
     T[:,0] = 0
-    T[:,1] = 1
-    T[:,2] = 2
-    T[:,3] = 3
+    T[:,1] = 6
+    T[:,2] = 30
+    T[:,3] = 42
     return np.array([[methyl_mean,methyl_genes],[internalizing_z,T.T]])
 
 def load_int_probe_data():

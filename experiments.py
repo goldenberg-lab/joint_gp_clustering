@@ -160,7 +160,7 @@ for iter in range(num_experiments):
     dp1_c2 = len(dp1.c2)
     # dp2_c2 = len(dp2.c2)
     dp1_gp = []
-    dp2_gp = []
+    # dp2_gp = []
 
     for k in range (dp1_c2):
         dp1_gp.append(GPCluster(rbf_kern,Y=train_data_int[1,0][list(dp1.c2[k]),:],\
