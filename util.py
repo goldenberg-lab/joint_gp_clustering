@@ -6,75 +6,60 @@ import time
 import csv
 from math import *
 
+# for simulation data
+def f0(x):
+    return np.sin(x*np.pi/1.5)  + np.random.normal(0,0.2)
+def f1(x):
+    return np.log(x+1) + np.random.normal(0,0.2) - 0.5
+def f2(x):
+    if(x>3):
+        return np.random.normal(0,0.3) -1
+    else:
+        return f0(x) + np.random.normal(0,0.2)
+
+def f3(x):
+    return 0 + np.random.normal(0,0.2)
+def f4(x):
+    return -1*(np.sqrt(abs(x))) + 1 + np.random.normal(0,0.3)
+
 def load_simulation_data():
-    # generate a data set
-    num_X_clusters = 7
+    num_X_clusters = 6
     num_Y_clusters = 5
-    Nobs = np.array([np.random.randint(30,41) for i in range(num_X_clusters)])
-    Nt1 = 6
-    #a random number of realisations in each cluster
-    T1 = np.random.rand(Nt1,np.sum(Nobs))
-    T1.sort(0)
-
-    #random frequency and phase for each cluster
-    base_freqs = 2*np.pi + 0.3*(np.random.rand(num_X_clusters)-.5)
-    base_phases = 2*np.pi*np.random.rand(num_X_clusters)
-    means = np.zeros((np.sum(Nobs),Nt1))
-    k=0
+    f = np.array([f0,f1,f2,f3,f4])
+    Nobs = np.array([np.random.randint(10,21) for i in range(num_X_clusters)])
+    Nt = 5
+    
+    true_c1 = np.array([set([]) for _ in range(num_X_clusters)])
+    true_ca1 = []
+    true_c2 = np.array([set([]) for _ in range(num_Y_clusters)])
+    true_ca2 = []
+    k = 0
+    alpha = np.array([[10,0.5,0.5,0.5,0.5],[0.5,10,0.5,0.5,0.5], \
+                    [0.5,0.5,10,0.5,0.5],[0.5,0.5,0.5,10,0.5],\
+                    [0.5,0.5,0.5,0.5,10],[1,1,1,1,1]])
     for i in range(num_X_clusters):
         for j in range(Nobs[i]):
-            means[k]= np.sin(base_freqs[i]*T1[:,k]+base_phases[i])
+            cluster = sample_multinomial(np.random.dirichlet(alpha[i]))
+            true_c1[i].add(k)
+            true_ca1.append(i)
+            true_c2[cluster].add(k)
+            true_ca2.append(cluster)
             k = k+1
 
-    freqs = .4*np.pi + 0.01*(np.random.rand(means.shape[0])-.5)
-    phases = 2*np.pi*np.random.rand(means.shape[0])
-    offsets = 0.3*np.vstack([np.sin(f*T1[:,n]+p).T for f,p,n in zip(freqs,phases,range(np.sum(Nobs)))])
-    X = means + offsets + np.random.randn(*means.shape)*0.05
+    means = np.random.normal(0,10, (num_X_clusters,3))
+    X = np.array([np.random.multivariate_normal(means[true_ca1[i]], 5*np.eye(3)) for i in range(np.sum(Nobs))])
 
-    np.random.seed(seed=32)
-    num_Y_clusters = 5
+    T = np.zeros((Nt,np.sum(Nobs)))
+    for i in range(Nt):
+        T[i,:] = i
 
-    # m0 = np.array(np.random.multivariate_normal([0,0], [[25, 0],[0, 25]],num_X_clusters))
-    # m1 = np.array(np.random.multivariate_normal([0,0,0], [[2500, 0, 0],[0, 2500,0], [0,0,2500]],num_Y_clusters))
-    # l1 = np.array([[100,200,100,50,150,250,150]]).T
-
-    probs = np.array([[0.3,0.01, 0.01, 0.2, 0.5],[0.8,0.2, 0.01, 0.01, 0.01],[0.1,0.1, 0.1, 0.6, 0.1],\
-                      [0.01,0.1, 0.01, 0.9, 0.01],[0.1,0.1, 0.4, 0.1, 0.3],[0.01,0.7, 0.01, 0.1, 0.2],\
-                      [0.01,0.01, 0.01, 0.01, 1.]])
-
-    true_X_clustering = np.array([set([]),set([]),set([]),set([]),set([]),set([]),set([])])
-    true_X_cluster_assn = []
-    true_Y_clustering = np.array([set([]),set([]),set([]),set([]),set([])])
-    true_Y_cluster_assn = []
+    Y = np.zeros((np.sum(Nobs),Nt))
     k = 0
-    for i in range(num_X_clusters):
-        for j in range(Nobs[i]):
-            cluster = sample_multinomial(probs[i])
-            true_X_clustering[i].add(k)
-            true_X_cluster_assn.append(i)
-            true_Y_clustering[cluster].add(k)
-            true_Y_cluster_assn.append(cluster)
-            k = k+1
-
-    l2 = np.array([len(true_Y_clustering[i]) for i in range(num_Y_clusters)])
-
-    Nt2 = 6
-    #a random number of realisations in each cluster
-    T2 = np.random.rand(Nt2,np.sum(Nobs))
-    T2.sort(0)
-    base_freqs = 2*np.pi + 0.3*(np.random.rand(num_Y_clusters)-.5)
-    base_phases = 2*np.pi*np.random.rand(num_Y_clusters)
-
-    k = 0
-    Y = np.zeros((np.sum(Nobs),Nt2))
-    for i in true_Y_cluster_assn:
-        f = .4*np.pi + 0.01*(np.random.rand() - 0.5)
-        p = 2*np.pi*np.random.rand()
-        offset = np.sin(f*T2[:,n]+p).T
-        Y[k] = np.sin(base_freqs[i]*T2[:,k]+base_phases[i]) +  offset + np.random.randn(*(1,Nt2))*0.05
+    for i in true_ca2:
+        Y[k,:] = [f[i](x) for x in range(Nt)]
         k = k+1
 
-    data = np.array([[X,T1],[Y,T2]])
+    data = np.array([[X,None],[Y,T]])
     return data
 
 def load_int_data():
