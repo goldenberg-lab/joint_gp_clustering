@@ -90,15 +90,15 @@ alpha1 = 1.
 alpha2 = 1.
 N,D = train_data[0,0].shape
 prior1 = {
-"m0" : np.mean(data[0,0], axis = 0).reshape(-1,1),
-"k0": 2,
-"s0": 10*np.eye(D),
-"v0": 3.
+"m0" : np.array([[0,0,0]]),
+"k0": 0.1,
+"s0": 3*np.eye(D),
+"v0": 4.
 }
 prior2 = {
-"var1" : 0.1, # variance for being
-"var2": 0.2,
-"length_scale": .5
+"var1" : 0.06, # variance for being
+"var2": 0.15,
+"length_scale": .6
 }
 # print prior1
 print prior2
@@ -106,7 +106,8 @@ rms_int = []
 rms_ext = []
 
 #TODO: start with a small number of experiments
-num_experiments = 1
+
+num_experiments = 15
 for iter in range(num_experiments):
     # idx is used to select random indices
     num_total= data[0,0].shape[0]
