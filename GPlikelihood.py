@@ -3,6 +3,11 @@ from numpy.linalg import inv, det
 
 class GPCluster(object):
     """GP Class to compute likelihood"""
+    # TODO:
+    # 1. Features to implement:
+    #   a. insert into GP
+    #   b. remove from GP
+    #   
     def __init__(self, kernel, Y, T,var1=1, l=1,var2=1):
         """Initialization"""
         self.var1 = var1
@@ -89,9 +94,7 @@ class GPCluster(object):
         returns mean and variance
         """
         new_t = np.concatenate((self.T,t.reshape(-1,1)),axis=1)
-        # print new_t.shape # TODO: check this
-        new_y = np.concatenate((self.Y,y.reshape(-1,1)),axis=0) # TODO: check this
-        # print new_y.shape
+        new_y = np.concatenate((self.Y,y.reshape(-1,1)),axis=0)
         K_ = self.K(new_t)
         K_star_star = K_[-1,-1]
         K_star = K_[-1,:-1] # TODO: check this

@@ -9,6 +9,7 @@ from DCRP import DCRP
 import cPickle
 import bokeh.plotting as bp
 bp.output_notebook()
+
 def compute_S(data):
     N,D = data.shape
     S = np.zeros((D,D))
